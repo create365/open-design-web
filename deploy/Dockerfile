@@ -68,7 +68,7 @@ RUN pnpm --filter @open-design/daemon build && \
 
 FROM ${RUNTIME_IMAGE}
 
-RUN apk add --no-cache tini poppler-utils && \
+RUN apk add --no-cache tini poppler-utils openssl && \
     addgroup -S -g 1001 open-design && \
     adduser -S -D -H -u 1001 -G open-design open-design
 
@@ -95,6 +95,12 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=192
 ENV OD_BIND_HOST=0.0.0.0
 ENV OD_PORT=7456
+
+# Generate OD_API_TOKEN if not provided (for container deployments like Render)
+RUN if [ -z "$OD_API_TOKEN" ]; then \
+      export OD_API_TOKEN=$(openssl rand -hex 32); \
+      echo "OD_API_TOKEN=$OD_API_TOKEN" >> /etc/environment; \
+    fi
 
 EXPOSE 7456
 
